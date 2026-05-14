@@ -12,17 +12,18 @@
 set -euo pipefail
 
 module load singularity/4.1.0-slurm
-#singularity pull --force https://depot.galaxyproject.org/singularity/plink:1.9.0b.7.7--h7b50bb2_0
 
-# ==== INPUT: biallelic, PASS, genotyping-rate>0.9 VCF ====
-IN_VCF_FILTERED="/scratch/pawsey1142/gracefang/WPM_project/WPM_population_genetics/9b.GenotypeFiltration/snps_biallelic.recode.vcf.gz"
+# ==== PATHS ====
+# make sure to use the vcf file with ID added in, otherwise later pipeline will not extract pruned snps correctly
+IN_VCF_FILTERED="/scratch/pawsey1142/gracefang/WPM_project/WPM_population_genetics/script/WPM_population_analysis/snps_biallelic_withIDs.vcf.gz"
+OUT_DIR="/scratch/pawsey1142/gracefang/WPM_project/WPM_population_genetics/10b.LDpruned"
+mkdir -p "$OUT_DIR"
 
-# ==== OUTPUT PREFIXES ====
+# ==== OUTPUT PREFIXES (all created in OUT_DIR) ====
 OUT_PREFIX_ALL="WPM_biallelic_all"
 OUT_PREFIX_LD="${OUT_PREFIX_ALL}_ld"
-OUT_PREFIX_LD_PRUNED="${OUT_PREFIX_ALL}_ld_pruned"
 
-# 1) Convert filtered SNP VCF to PLINK binary (no MAF filter)
+# 1) Convert ID-annotated SNP VCF to PLINK binary
 singularity run plink:1.9.0b.7.7--h7b50bb2_0 \
   plink \
     --vcf "$IN_VCF_FILTERED" \
@@ -38,7 +39,4 @@ singularity run plink:1.9.0b.7.7--h7b50bb2_0 \
     --allow-extra-chr \
     --indep-pairwise 50 10 0.5 \
     --out "${OUT_PREFIX_LD}"
-
-
-echo "[$(date)] Finished LD pruning and VCF export."
 
