@@ -40,3 +40,30 @@ singularity run plink:1.9.0b.7.7--h7b50bb2_0 \
     --indep-pairwise 50 10 0.5 \
     --out "${OUT_PREFIX_LD}"
 
+## ============================ second half, extract pruned position and extract SNPs from vcf ====================================
+# 3) Map prune.in IDs to CHROM + POS
+BIM="${OUT_PREFIX_ALL}.bim"              # WPM_biallelic_all.bim
+PRUNE_IN="${OUT_PREFIX_LD}.prune.in"     # WPM_biallelic_all_ld.prune.in
+POS_FILE="${OUT_PREFIX_LD}.prune.in.pos" # WPM_biallelic_all_ld.prune.in.pos
+
+awk 'NR==FNR {keep[$1]; next} ($2 in keep){print $1"\t"$4}' \
+  "$PRUNE_IN" "$BIM" \
+  > "$POS_FILE"
+
+# 4) Apply pruning to the ID-annotated biallelic VCF
+VCF_BIALLELIC="$IN_VCF_FILTERED"
+OUT_PREFIX_VCF="${OUT_DIR}/snps_biallelic_ldpruned"
+
+singularity run vcftools:0.1.17--pl5321h077b44d_0 \
+  vcftools \
+    --gzvcf "$VCF_BIALLELIC" \
+    --positions "$POS_FILE" \
+    --recode --recode-INFO-all \
+    --out "$OUT_PREFIX_VCF"
+
+# 5) Compress + index pruned VCF
+singularity run htslib:1.9--hc238db4_4 \
+  bgzip -f "${OUT_PREFIX_VCF}.recode.vcf"
+
+singularity run htslib:1.9--hc238db4_4 \
+  tabix -p vcf "${OUT_PREFIX_VCF}.recode.vcf.gz"
