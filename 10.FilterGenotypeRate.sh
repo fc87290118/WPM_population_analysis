@@ -17,6 +17,7 @@ VCF_IN="/scratch/pawsey1142/gracefang/WPM_project/WPM_population_genetics/8b.Var
 OUT_DIR="/scratch/pawsey1142/gracefang/WPM_project/WPM_population_genetics/9b.GenotypeFiltration"
 mkdir -p "$OUT_DIR"
 
+#Keep SNPs where at least 90% of isolates have genotype calls.
 singularity run vcftools:0.1.17--pl5321h077b44d_0 \
   vcftools --gzvcf "$VCF_IN" \
     --max-missing 0.9 \
